@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nonius CDN Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --nonius-blue: #0070C0;
+            --nonius-navy: #171844;
+            --nonius-green: #87A238;
+            --nonius-grey: #222222;
+            --nonius-bg: #f8fafc;
+        }
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background-color: var(--nonius-bg);
+            color: var(--nonius-grey);
+        }
+        h1, h2, h3, h4, .heading {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 600;
+        }
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        .nonius-gradient {
+            background: linear-gradient(135deg, #171844 0%, #0070C0 100%);
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "hls.js": "https://esm.sh/hls.js@^1.5.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

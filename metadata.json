@@ -1,0 +1,5 @@
+{
+  "name": "Nonius CDN Controller",
+  "description": "A technical dashboard for querying Nonius CDN channel configurations using Gemini AI.",
+  "requestFramePermissions": []
+}

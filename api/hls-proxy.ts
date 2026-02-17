@@ -1,24 +1,26 @@
-
 export const config = {
   runtime: 'edge',
 };
 
 export default async function handler(req: Request) {
-  const { searchParams, origin } = new URL(req.url);
-  const targetUrl = searchParams.get('url');
+  const urlObj = new URL(req.url);
+  const targetUrl = urlObj.searchParams.get('url');
 
   if (!targetUrl) {
-    return new Response('Missing URL parameter', { status: 400 });
+    return new Response('Missing URL parameter', { 
+      status: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   }
 
-  // Hantera preflight OPTIONS anrop
+  // Handle preflight OPTIONS calls
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-        'Access-Control-Allow-Headers': 'Range, Content-Type, Accept',
+        'Access-Control-Allow-Headers': 'Range, Content-Type, Accept, Origin, X-Requested-With, Authorization',
         'Access-Control-Max-Age': '86400',
       },
     });
@@ -26,50 +28,74 @@ export default async function handler(req: Request) {
 
   try {
     const rangeHeader = req.headers.get('range');
+    
+    // Some streams require specific headers to not 403
     const upstreamResponse = await fetch(targetUrl, {
       method: 'GET',
       headers: {
         ...(rangeHeader ? { 'Range': rangeHeader } : {}),
-        'User-Agent': 'Nonius-CDN-Proxy/5.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Accept': '*/*',
+        'Connection': 'keep-alive',
       },
+      redirect: 'follow',
     });
 
-    const contentType = upstreamResponse.headers.get('content-type') || '';
-    const isManifest = contentType.includes('mpegurl') || targetUrl.endsWith('.m3u8');
+    // Final URL after any redirects
+    const finalUrl = upstreamResponse.url;
+    const baseUrl = new URL(finalUrl);
+
+    const contentType = upstreamResponse.headers.get('content-type')?.toLowerCase() || '';
+    
+    // More inclusive manifest check
+    const isManifest = 
+      contentType.includes('mpegurl') || 
+      contentType.includes('application/x-mpegurl') || 
+      contentType.includes('application/vnd.apple.mpegurl') ||
+      contentType.includes('text/plain') || // Some misconfigured servers
+      targetUrl.includes('.m3u8') ||
+      finalUrl.includes('.m3u8');
 
     const responseHeaders = new Headers();
-    const headersToPreserve = ['content-type', 'cache-control', 'accept-ranges', 'content-length', 'content-range'];
+    
+    // Copy relevant headers
+    const headersToPreserve = ['content-type', 'cache-control', 'accept-ranges', 'content-range', 'expires', 'last-modified', 'etag'];
     headersToPreserve.forEach(h => {
       const val = upstreamResponse.headers.get(h);
       if (val) responseHeaders.set(h, val);
     });
 
+    // Enforce CORS for the browser
     responseHeaders.set('Access-Control-Allow-Origin', '*');
+    responseHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    responseHeaders.set('Access-Control-Allow-Headers', 'Range, Content-Type, Accept');
     responseHeaders.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
 
-    if (isManifest) {
-      // MANIFEST REWRITING LOGIC
-      // Vi måste skriva om innehållet i .m3u8 filen så att alla länkar går via denna proxy
+    if (isManifest && upstreamResponse.ok) {
       const text = await upstreamResponse.text();
-      const baseUrl = new URL(targetUrl);
-      const proxyBase = `${origin}/api/hls-proxy?url=`;
+      // Use current origin and path for proxying
+      const proxyBase = `${urlObj.origin}${urlObj.pathname}?url=`;
 
-      const rewrittenManifest = text.split('\n').map(line => {
+      const lines = text.split(/\r?\n/);
+      const rewrittenManifest = lines.map(line => {
         const trimmed = line.trim();
-        // Ignonera kommentarer/tags som inte är länkar
-        if (!trimmed || trimmed.startsWith('#')) {
-          // Specialfall: Vissa tags innehåller URI="...", de måste också skrivas om
-          if (trimmed.includes('URI="')) {
-            return line.replace(/URI="([^"]+)"/g, (match, uri) => {
+        if (!trimmed) return line;
+
+        // Tags that might contain URIs
+        if (trimmed.startsWith('#')) {
+          // Handle common tags with URI attributes
+          // EXT-X-KEY, EXT-X-MEDIA, EXT-X-MAP, EXT-X-PART-INF, etc.
+          return line.replace(/URI="([^"]+)"/g, (match, uri) => {
+            try {
               const absoluteUri = new URL(uri, baseUrl).href;
               return `URI="${proxyBase}${encodeURIComponent(absoluteUri)}"`;
-            });
-          }
-          return line;
+            } catch {
+              return match;
+            }
+          });
         }
         
-        // Gör länkarna absoluta och tunnla dem via proxyn
+        // This line is a URL for a segment or variant playlist
         try {
           const absoluteUrl = new URL(trimmed, baseUrl).href;
           return `${proxyBase}${encodeURIComponent(absoluteUrl)}`;
@@ -78,22 +104,37 @@ export default async function handler(req: Request) {
         }
       }).join('\n');
 
+      // Always clear content-length for modified body
+      responseHeaders.delete('content-length');
+      
+      // Ensure it's treated as a manifest
+      if (!responseHeaders.get('content-type')?.includes('mpegurl')) {
+        responseHeaders.set('content-type', 'application/vnd.apple.mpegurl');
+      }
+
       return new Response(rewrittenManifest, {
         status: 200,
         headers: responseHeaders,
       });
     }
 
-    // För binära segment (.ts, .m4s), strömma direkt
+    // For everything else (video chunks), stream directly
     return new Response(upstreamResponse.body, {
       status: upstreamResponse.status,
       headers: responseHeaders,
     });
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: 'Proxy Failed', details: error.message }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    console.error('HLS Proxy Fatal Error:', error.message);
+    return new Response(JSON.stringify({ 
+      error: 'Proxy Tunnel Exception', 
+      details: error.message 
+    }), { 
+      status: 502,
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Access-Control-Allow-Origin': '*' 
+      }
     });
   }
 }

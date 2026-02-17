@@ -3,33 +3,51 @@ export const config = {
 };
 
 export default async function handler(req: Request) {
-  const targetUrl = new URL(req.url).searchParams.get('url');
+  // 1. Hantera CORS Preflight direkt
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
+
+  const url = new URL(req.url);
+  const targetUrl = url.searchParams.get('url');
 
   if (!targetUrl) {
-    return new Response('No URL provided', { status: 400 });
+    return new Response('No URL', { status: 400 });
   }
 
   try {
-    const res = await fetch(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      redirect: 'follow'
+    const response = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
     });
-    
+
     const headers = new Headers();
     headers.set('Access-Control-Allow-Origin', '*');
-    headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    headers.set('Content-Type', res.headers.get('Content-Type') || 'application/vnd.apple.mpegurl');
+    // Vi tvingar på rätt MIME-typ om det är en manifestfil
+    const contentType = targetUrl.endsWith('.m3u8') 
+      ? 'application/vnd.apple.mpegurl' 
+      : (response.headers.get('content-type') || 'video/MP2T');
+    
+    headers.set('Content-Type', contentType);
 
-    return new Response(res.body, {
-      status: res.status,
-      headers
+    return new Response(response.body, {
+      status: response.status,
+      headers,
     });
-  } catch (err: any) {
-    // Om detta ger 502 för interna IP-adresser (172.x) beror det på att Vercel inte kan nå dem.
-    // Testa de "Globala" kanalerna för att verifiera att proxyn fungerar.
-    return new Response('Proxy Connection Failed', { 
-      status: 502,
-      headers: { 'Access-Control-Allow-Origin': '*' }
+  } catch (error: any) {
+    // Om vi får 502 här betyder det att Vercel inte når IP-adressen (vilket stämmer för 172.18.x.x)
+    return new Response(`Connect Failure: ${error.message}`, { 
+      status: 502, 
+      headers: { 'Access-Control-Allow-Origin': '*' } 
     });
   }
 }

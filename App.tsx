@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import VideoPlayer from './components/VideoPlayer';
 import Logo from './components/Logo';
@@ -46,9 +45,9 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl">
           {[
             { id: 'global', name: 'Global OTT', desc: 'Secure Proxy Tunnel', color: 'blue' },
-            { id: 'sthlm-edge', name: 'Stockholm EDGE', desc: 'Node 172.18.56.5', color: 'orange' },
-            { id: 'porto-hq', name: 'Porto Maia HQ', desc: 'Node 10.20.30.253', color: 'green' },
-            { id: 'porto-noc', name: 'Porto Maia NOC', desc: 'Node 10.0.30.40', color: 'red' }
+            { id: 'sthlm-edge', name: 'Stockholm EDGE', desc: 'Internal 172.18.56.5', color: 'orange' },
+            { id: 'porto-hq', name: 'Porto Maia HQ', desc: 'Internal 10.20.30.253', color: 'green' },
+            { id: 'porto-noc', name: 'Porto Maia NOC', desc: 'Internal 10.0.30.40', color: 'red' }
           ].map((src) => (
             <button
               key={src.id}
@@ -91,6 +90,18 @@ const App: React.FC = () => {
       </nav>
 
       <main className="flex-1 overflow-y-auto p-10 bg-[#0F172A]">
+        {selectedSource !== 'global' && (
+          <div className="max-w-[1600px] mx-auto mb-8 p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-center gap-4">
+             <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </div>
+             <div>
+                <h4 className="text-white text-xs font-black uppercase tracking-widest">Internal Node Selected</h4>
+                <p className="text-slate-400 text-[10px] uppercase font-bold">Channels on this node are served via internal IP addresses. You must be on the local network or VPN for the proxy to reach them.</p>
+             </div>
+          </div>
+        )}
+
         {activeTab === 'library' ? (
           <div className="space-y-12 max-w-[1600px] mx-auto">
             <div className="flex justify-between items-end border-b border-white/5 pb-8">
@@ -118,7 +129,7 @@ const App: React.FC = () => {
                            </button>
                         </div>
                         
-                        <div className="relative aspect-video bg-black/60 rounded-xl overflow-hidden mb-3 group-hover:shadow-2xl transition-all">
+                        <div className="relative aspect-video bg-black/60 rounded-xl overflow-hidden mb-3 group-hover:shadow-2xl transition-all border border-white/5">
                            {activePreview === channel.channel_name ? (
                              <VideoPlayer url={channel.stream_url_https} channelName={channel.channel_name} muted />
                            ) : (
@@ -127,6 +138,9 @@ const App: React.FC = () => {
                                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                 </div>
                                 <span className="text-[8px] font-black text-white/20 uppercase tracking-widest mt-3 group-hover:text-white transition-all">Click to Preview</span>
+                                {channel.stream_url_https.includes('172.18') && (
+                                   <span className="absolute top-2 right-2 px-1.5 py-0.5 bg-orange-500/20 text-orange-500 text-[6px] font-black rounded uppercase">Internal</span>
+                                )}
                              </div>
                            )}
                         </div>
@@ -161,7 +175,12 @@ const App: React.FC = () => {
       </main>
 
       <footer className="bg-[#171844] border-t border-white/5 px-8 py-3 flex justify-between text-[8px] font-black text-white/20 uppercase tracking-[0.4em]">
-        <span>Proxy Protocol: Edge-V1</span>
+        <div className="flex gap-4">
+           <span>Proxy Protocol: Edge-V2</span>
+           <span className={selectedSource === 'global' ? 'text-green-500/40' : 'text-orange-500/40'}>
+              Mode: {selectedSource === 'global' ? 'Public' : 'Intranet'}
+           </span>
+        </div>
         <span>© 2025 Nonius CDN Ops</span>
       </footer>
     </div>

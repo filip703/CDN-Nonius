@@ -1,17 +1,16 @@
-
 export const config = {
   runtime: 'edge',
 };
 
 export default async function handler(req: Request) {
-  const urlObj = new URL(req.url);
-  const targetUrl = urlObj.searchParams.get('url');
+  const { searchParams } = new URL(req.url);
+  const targetUrl = searchParams.get('url');
 
   if (!targetUrl) {
-    return new Response('Missing URL parameter', { status: 400 });
+    return new Response('Missing URL', { status: 400 });
   }
 
-  // Standard CORS preflight
+  // CORS Preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -19,36 +18,35 @@ export default async function handler(req: Request) {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
         'Access-Control-Allow-Headers': '*',
-        'Access-Control-Max-Age': '86400',
       },
     });
   }
 
   try {
-    // Vi skickar med Range om det finns (viktigt för vissa spelare)
-    const range = req.headers.get('range');
-    
-    const response = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-        ...(range ? { 'Range': range } : {}),
-      },
+    const upstreamResponse = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
       redirect: 'follow'
     });
 
-    const newHeaders = new Headers(response.headers);
+    // Vi skapar nya headers för att undvika konflikter med 'content-length' 
+    // eller 'content-encoding' från källan som kan krocka med Edge-runtimen.
+    const responseHeaders = new Headers();
+    responseHeaders.set('Access-Control-Allow-Origin', '*');
+    responseHeaders.set('Content-Type', upstreamResponse.headers.get('content-type') || 'application/vnd.apple.mpegurl');
     
-    // Tvinga CORS så webbläsaren blir nöjd
-    newHeaders.set('Access-Control-Allow-Origin', '*');
-    newHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    newHeaders.set('Access-Control-Expose-Headers', '*');
+    // Kopiera över Range-support om det finns
+    if (upstreamResponse.headers.has('accept-ranges')) {
+      responseHeaders.set('accept-ranges', upstreamResponse.headers.get('accept-ranges')!);
+    }
 
-    // Returnera rå-datat direkt utan att röra innehållet
-    return new Response(response.body, {
-      status: response.status,
-      headers: newHeaders,
+    return new Response(upstreamResponse.body, {
+      status: upstreamResponse.status,
+      headers: responseHeaders,
     });
-  } catch (e: any) {
-    return new Response(`Proxy Error: ${e.message}`, { status: 500 });
+  } catch (error: any) {
+    return new Response(`Proxy error: ${error.message}`, { 
+      status: 502,
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   }
 }

@@ -1,122 +1,61 @@
+
 import { SourceKey } from './types';
 
+// Global OTT Streams (Served via HTTPS, often needs CORS proxy)
 export const GLOBAL_CHANNELS = [
-  { name: 'sjuan', ip: '224.168.0.7', head: 'heads3', https: 'https://se-ott.nonius.tv/sjuan/index.m3u8', local: 'http://se-ott.nonius.tv/sjuan/index.m3u8' },
-  { name: 'tv8', ip: '224.168.0.8', head: 'heads1', https: 'https://se-ott.nonius.tv/tv8/index.m3u8', local: 'http://se-ott.nonius.tv/tv8/index.m3u8' },
-  { name: 'tv4', ip: '224.168.0.4', head: 'heads1', https: 'https://se-ott.nonius.tv/tv4/index.m3u8', local: 'http://se-ott.nonius.tv/tv4/index.m3u8' },
-  { name: 'tv10', ip: '224.168.0.10', head: 'heads1', https: 'https://se-ott.nonius.tv/tv10/index.m3u8', local: 'http://se-ott.nonius.tv/tv10/index.m3u8' },
-  { name: 'skynews', ip: '224.168.0.17', head: 'heads5', https: 'https://se-ott.nonius.tv/skynews/index.m3u8', local: 'http://se-ott.nonius.tv/skynews/index.m3u8' },
-  { name: 'svt2', ip: '224.168.0.2', head: 'heads3', https: 'https://se-ott.nonius.tv/svt2/index.m3u8', local: 'http://se-ott.nonius.tv/svt2/index.m3u8' },
-  { name: 'tv3', ip: '224.168.0.3', head: 'heads1', https: 'https://se-ott.nonius.tv/tv3/index.m3u8', local: 'http://se-ott.nonius.tv/tv3/index.m3u8' },
-  { name: 'svt1', ip: '224.168.0.1', head: 'heads3', https: 'https://se-ott.nonius.tv/svt1/index.m3u8', local: 'http://se-ott.nonius.tv/svt1/index.m3u8' },
-  { name: 'Nickelodeon', ip: '224.168.0.27', head: 'heads3', https: 'https://se-ott.nonius.tv/Nickelodeon/index.m3u8', local: 'http://se-ott.nonius.tv/Nickelodeon/index.m3u8' },
-  { name: 'mtv80', ip: '224.168.0.19', head: 'heads3', https: 'https://se-ott.nonius.tv/mtv80/index.m3u8', local: 'http://se-ott.nonius.tv/mtv80/index.m3u8' },
-  { name: 'kunskaps', ip: '224.168.0.16', head: 'heads3', https: 'https://se-ott.nonius.tv/kunskaps/index.m3u8', local: 'http://se-ott.nonius.tv/kunskaps/index.m3u8' },
-  { name: 'tv12', ip: '224.168.1.12', head: 'heads2', https: 'https://se-ott.nonius.tv/tv12/index.m3u8', local: 'http://se-ott.nonius.tv/tv12/index.m3u8' },
-  { name: 'kanal11', ip: '224.168.1.11', head: 'heads2', https: 'https://se-ott.nonius.tv/kanal11/index.m3u8', local: 'http://se-ott.nonius.tv/kanal11/index.m3u8' },
-  { name: 'kanal9', ip: '224.168.1.9', head: 'heads2', https: 'https://se-ott.nonius.tv/kanal9/index.m3u8', local: 'http://se-ott.nonius.tv/kanal9/index.m3u8' },
-  { name: 'svtbarn', ip: '224.168.0.13', head: 'heads3', https: 'https://se-ott.nonius.tv/svtbarn/index.m3u8', local: 'http://se-ott.nonius.tv/svtbarn/index.m3u8' },
-  { name: 'tv6', ip: '224.168.1.6', head: 'heads2', https: 'https://se-ott.nonius.tv/tv6/index.m3u8', local: 'http://se-ott.nonius.tv/tv6/index.m3u8' },
-  { name: 'kanal5', ip: '224.168.1.5', head: 'heads2', https: 'https://se-ott.nonius.tv/kanal5/index.m3u8', local: 'http://se-ott.nonius.tv/kanal5/index.m3u8' },
+  { name: 'sjuan', ip: '224.168.0.7', head: 'heads3', https: 'https://se-ott.nonius.tv/sjuan/index.m3u8', local: null },
+  { name: 'tv8', ip: '224.168.0.8', head: 'heads1', https: 'https://se-ott.nonius.tv/tv8/index.m3u8', local: null },
+  { name: 'tv4', ip: '224.168.0.4', head: 'heads1', https: 'https://se-ott.nonius.tv/tv4/index.m3u8', local: null },
+  { name: 'tv10', ip: '224.168.0.10', head: 'heads1', https: 'https://se-ott.nonius.tv/tv10/index.m3u8', local: null },
+  { name: 'skynews', ip: '224.168.0.17', head: 'heads5', https: 'https://se-ott.nonius.tv/skynews/index.m3u8', local: null },
+  { name: 'svt2', ip: '224.168.0.2', head: 'heads3', https: 'https://se-ott.nonius.tv/svt2/index.m3u8', local: null },
+  { name: 'tv3', ip: '224.168.0.3', head: 'heads1', https: 'https://se-ott.nonius.tv/tv3/index.m3u8', local: null },
+  { name: 'svt1', ip: '224.168.0.1', head: 'heads3', https: 'https://se-ott.nonius.tv/svt1/index.m3u8', local: null },
+  { name: 'Nickelodeon', ip: '224.168.0.27', head: 'heads3', https: 'https://se-ott.nonius.tv/Nickelodeon/index.m3u8', local: null },
+  { name: 'mtv80', ip: '224.168.0.19', head: 'heads3', https: 'https://se-ott.nonius.tv/mtv80/index.m3u8', local: null },
+  { name: 'kunskaps', ip: '224.168.0.16', head: 'heads3', https: 'https://se-ott.nonius.tv/kunskaps/index.m3u8', local: null },
+  { name: 'tv12', ip: '224.168.1.12', head: 'heads2', https: 'https://se-ott.nonius.tv/tv12/index.m3u8', local: null },
+  { name: 'kanal11', ip: '224.168.1.11', head: 'heads2', https: 'https://se-ott.nonius.tv/kanal11/index.m3u8', local: null },
+  { name: 'kanal9', ip: '224.168.1.9', head: 'heads2', https: 'https://se-ott.nonius.tv/kanal9/index.m3u8', local: null },
+  { name: 'svtbarn', ip: '224.168.0.13', head: 'heads3', https: 'https://se-ott.nonius.tv/svtbarn/index.m3u8', local: null },
+  { name: 'tv6', ip: '224.168.1.6', head: 'heads2', https: 'https://se-ott.nonius.tv/tv6/index.m3u8', local: null },
+  { name: 'kanal5', ip: '224.168.1.5', head: 'heads2', https: 'https://se-ott.nonius.tv/kanal5/index.m3u8', local: null },
   { name: 'viaplaysport', ip: '224.168.19.2', head: 'heads2', https: 'https://se-ott.nonius.tv/viaplaysport/index.m3u8', local: null },
 ];
 
-export const STOCKHOLM_CHANNELS = [
-  { name: 'sjuan', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/sjuan/index.m3u8', local: 'http://172.18.56.5/sjuan/index.m3u8' },
-  { name: 'tv8', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv8/index.m3u8', local: 'http://172.18.56.5/tv8/index.m3u8' },
-  { name: 'tv4', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv4/index.m3u8', local: 'http://172.18.56.5/tv4/index.m3u8' },
-  { name: 'tv10', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv10/index.m3u8', local: 'http://172.18.56.5/tv10/index.m3u8' },
-  { name: 'skynews', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/skynews/index.m3u8', local: 'http://172.18.56.5/skynews/index.m3u8' },
-  { name: 'svt2', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/svt2/index.m3u8', local: 'http://172.18.56.5/svt2/index.m3u8' },
-  { name: 'tv3', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv3/index.m3u8', local: 'http://172.18.56.5/tv3/index.m3u8' },
-  { name: 'svt1', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/svt1/index.m3u8', local: 'http://172.18.56.5/svt1/index.m3u8' },
-  { name: 'Nickelodeon', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/Nickelodeon/index.m3u8', local: 'http://172.18.56.5/Nickelodeon/index.m3u8' },
-  { name: 'mtv80', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/mtv80/index.m3u8', local: 'http://172.18.56.5/mtv80/index.m3u8' },
-  { name: 'kunskaps', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/kunskaps/index.m3u8', local: 'http://172.18.56.5/kunskaps/index.m3u8' },
-  { name: 'tv12', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv12/index.m3u8', local: 'http://172.18.56.5/tv12/index.m3u8' },
-  { name: 'kanal11', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/kanal11/index.m3u8', local: 'http://172.18.56.5/kanal11/index.m3u8' },
-  { name: 'kanal9', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/kanal9/index.m3u8', local: 'http://172.18.56.5/kanal9/index.m3u8' },
-  { name: 'svtbarn', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/svtbarn/index.m3u8', local: 'http://172.18.56.5/svtbarn/index.m3u8' },
-  { name: 'tv6', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv6/index.m3u8', local: 'http://172.18.56.5/tv6/index.m3u8' },
-  { name: 'kanal5', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/kanal5/index.m3u8', local: 'http://172.18.56.5/kanal5/index.m3u8' },
-  { name: 'cnni', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/cnni/index.m3u8', local: 'http://172.18.56.5/cnni/index.m3u8' },
-  { name: 'YLE2', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/YLE2/index.m3u8', local: 'http://172.18.56.5/YLE2/index.m3u8' },
-  { name: 'nrk2', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/nrk2/index.m3u8', local: 'http://172.18.56.5/nrk2/index.m3u8' },
-  { name: 'nrk1', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/nrk1/index.m3u8', local: 'http://172.18.56.5/nrk1/index.m3u8' },
-  { name: 'Viasat_hist', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/Viasat_hist/index.m3u8', local: 'http://172.18.56.5/Viasat_hist/index.m3u8' },
-  { name: 'Eurosport1', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/Eurosport1/index.m3u8', local: 'http://172.18.56.5/Eurosport1/index.m3u8' },
-  { name: 'DR1', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/DR1/index.m3u8', local: 'http://172.18.56.5/DR1/index.m3u8' },
-  { name: 'DW', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/DW/index.m3u8', local: 'http://172.18.56.5/DW/index.m3u8' },
-  { name: 'DR2', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/DR2/index.m3u8', local: 'http://172.18.56.5/DR2/index.m3u8' },
-  { name: 'TLC', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/TLC/index.m3u8', local: 'http://172.18.56.5/TLC/index.m3u8' },
-  { name: 'YLE1', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/YLE1/index.m3u8', local: 'http://172.18.56.5/YLE1/index.m3u8' },
-  { name: 'bbc', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/bbc/index.m3u8', local: 'http://172.18.56.5/bbc/index.m3u8' },
-  { name: 'aljazera', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/aljazera/index.m3u8', local: 'http://172.18.56.5/aljazera/index.m3u8' },
-  { name: 'tv4guld', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/tv4guld/index.m3u8', local: 'http://172.18.56.5/tv4guld/index.m3u8' },
-  { name: 'mtv00', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/mtv00/index.m3u8', local: 'http://172.18.56.5/mtv00/index.m3u8' },
-  { name: 'MTV', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/MTV/index.m3u8', local: 'http://172.18.56.5/MTV/index.m3u8' },
-  { name: 'CNBC', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/CNBC/index.m3u8', local: 'http://172.18.56.5/CNBC/index.m3u8' },
-  { name: 'Eurosport2', ip: '172.18.56.5', head: 'sthlm-edge', https: 'http://172.18.56.5/Eurosport2/index.m3u8', local: 'http://172.18.56.5/Eurosport2/index.m3u8' },
+const STHLM_IP = '172.18.56.5';
+const STHLM_CHANNELS_LIST = [
+  'sjuan', 'tv8', 'tv4', 'tv10', 'skynews', 'svt2', 'tv3', 'svt1', 'Nickelodeon', 'mtv80', 
+  'kunskaps', 'tv12', 'kanal11', 'kanal9', 'svtbarn', 'tv6', 'kanal5', 'cnni', 'YLE2', 
+  'nrk2', 'nrk1', 'Viasat_hist', 'Eurosport1', 'DR1', 'DW', 'DR2', 'TLC', 'YLE1', 
+  'bbc', 'aljazera', 'tv4guld', 'mtv00', 'MTV', 'CNBC', 'Eurosport2'
 ];
 
-export const PORTO_HQ_CHANNELS = [
-  { name: 'sjuan', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/sjuan/index.m3u8', local: 'http://10.20.30.253/sjuan/index.m3u8' },
-  { name: 'tv8', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv8/index.m3u8', local: 'http://10.20.30.253/tv8/index.m3u8' },
-  { name: 'tv4', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv4/index.m3u8', local: 'http://10.20.30.253/tv4/index.m3u8' },
-  { name: 'tv10', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv10/index.m3u8', local: 'http://10.20.30.253/tv10/index.m3u8' },
-  { name: 'skynews', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/skynews/index.m3u8', local: 'http://10.20.30.253/skynews/index.m3u8' },
-  { name: 'svt2', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/svt2/index.m3u8', local: 'http://10.20.30.253/svt2/index.m3u8' },
-  { name: 'tv3', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv3/index.m3u8', local: 'http://10.20.30.253/tv3/index.m3u8' },
-  { name: 'svt1', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/svt1/index.m3u8', local: 'http://10.20.30.253/svt1/index.m3u8' },
-  { name: 'Nickelodeon', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/Nickelodeon/index.m3u8', local: 'http://10.20.30.253/Nickelodeon/index.m3u8' },
-  { name: 'mtv80', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/mtv80/index.m3u8', local: 'http://10.20.30.253/mtv80/index.m3u8' },
-  { name: 'kunskaps', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/kunskaps/index.m3u8', local: 'http://10.20.30.253/kunskaps/index.m3u8' },
-  { name: 'tv12', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv12/index.m3u8', local: 'http://10.20.30.253/tv12/index.m3u8' },
-  { name: 'kanal11', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/kanal11/index.m3u8', local: 'http://10.20.30.253/kanal11/index.m3u8' },
-  { name: 'kanal9', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/kanal9/index.m3u8', local: 'http://10.20.30.253/kanal9/index.m3u8' },
-  { name: 'svtbarn', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/svtbarn/index.m3u8', local: 'http://10.20.30.253/svtbarn/index.m3u8' },
-  { name: 'tv6', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv6/index.m3u8', local: 'http://10.20.30.253/tv6/index.m3u8' },
-  { name: 'kanal5', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/kanal5/index.m3u8', local: 'http://10.20.30.253/kanal5/index.m3u8' },
-  { name: 'cnni', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/cnni/index.m3u8', local: 'http://10.20.30.253/cnni/index.m3u8' },
-  { name: 'YLE2', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/YLE2/index.m3u8', local: 'http://10.20.30.253/YLE2/index.m3u8' },
-  { name: 'nrk2', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/nrk2/index.m3u8', local: 'http://10.20.30.253/nrk2/index.m3u8' },
-  { name: 'nrk1', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/nrk1/index.m3u8', local: 'http://10.20.30.253/nrk1/index.m3u8' },
-  { name: 'Viasat_hist', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/Viasat_hist/index.m3u8', local: 'http://10.20.30.253/Viasat_hist/index.m3u8' },
-  { name: 'Eurosport1', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/Eurosport1/index.m3u8', local: 'http://10.20.30.253/Eurosport1/index.m3u8' },
-  { name: 'DR1', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/DR1/index.m3u8', local: 'http://10.20.30.253/DR1/index.m3u8' },
-  { name: 'DW', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/DW/index.m3u8', local: 'http://10.20.30.253/DW/index.m3u8' },
-  { name: 'DR2', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/DR2/index.m3u8', local: 'http://10.20.30.253/DR2/index.m3u8' },
-  { name: 'TLC', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/TLC/index.m3u8', local: 'http://10.20.30.253/TLC/index.m3u8' },
-  { name: 'YLE1', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/YLE1/index.m3u8', local: 'http://10.20.30.253/YLE1/index.m3u8' },
-  { name: 'bbc', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/bbc/index.m3u8', local: 'http://10.20.30.253/bbc/index.m3u8' },
-  { name: 'aljazera', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/aljazera/index.m3u8', local: 'http://10.20.30.253/aljazera/index.m3u8' },
-  { name: 'tv4guld', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/tv4guld/index.m3u8', local: 'http://10.20.30.253/tv4guld/index.m3u8' },
-  { name: 'mtv00', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/mtv00/index.m3u8', local: 'http://10.20.30.253/mtv00/index.m3u8' },
-  { name: 'MTV', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/MTV/index.m3u8', local: 'http://10.20.30.253/MTV/index.m3u8' },
-  { name: 'CNBC', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/CNBC/index.m3u8', local: 'http://10.20.30.253/CNBC/index.m3u8' },
-  { name: 'Eurosport2', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/Eurosport2/index.m3u8', local: 'http://10.20.30.253/Eurosport2/index.m3u8' },
-  { name: 'bbcnordic', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/bbcnordic/index.m3u8', local: 'http://10.20.30.253/bbcnordic/index.m3u8' },
-  { name: 'viaplaysport', ip: '10.20.30.253', head: 'maia-hq', https: 'http://10.20.30.253/viaplaysport/index.m3u8', local: 'http://10.20.30.253/viaplaysport/index.m3u8' },
+export const STOCKHOLM_CHANNELS = STHLM_CHANNELS_LIST.map(name => ({
+  name, ip: STHLM_IP, head: 'sthlm-edge', https: `http://${STHLM_IP}/${name}/index.m3u8`, local: `http://${STHLM_IP}/${name}/index.m3u8`
+}));
+
+const MAIA_HQ_IP = '10.20.30.253';
+const MAIA_HQ_LIST = [
+  'sjuan', 'tv8', 'tv4', 'tv10', 'skynews', 'svt2', 'tv3', 'svt1', 'Nickelodeon', 'mtv80', 
+  'kunskaps', 'tv12', 'kanal11', 'kanal9', 'svtbarn', 'tv6', 'kanal5', 'cnni', 'YLE2', 
+  'nrk2', 'nrk1', 'Viasat_hist', 'Eurosport1', 'DR1', 'DW', 'DR2', 'TLC', 'YLE1', 
+  'bbc', 'aljazera', 'tv4guld', 'mtv00', 'MTV', 'CNBC', 'Eurosport2', 'bbcnordic', 'viaplaysport'
 ];
 
-export const PORTO_NOC_CHANNELS = [
-  { name: 'sjuan', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/sjuan/index.m3u8', local: 'http://10.0.30.40/sjuan/index.m3u8' },
-  { name: 'tv8', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/tv8/index.m3u8', local: 'http://10.0.30.40/tv8/index.m3u8' },
-  { name: 'tv4', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/tv4/index.m3u8', local: 'http://10.0.30.40/tv4/index.m3u8' },
-  { name: 'skynews', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/skynews/index.m3u8', local: 'http://10.0.30.40/skynews/index.m3u8' },
-  { name: 'svt2', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/svt2/index.m3u8', local: 'http://10.0.30.40/svt2/index.m3u8' },
-  { name: 'svt1', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/svt1/index.m3u8', local: 'http://10.0.30.40/svt1/index.m3u8' },
-  { name: 'kunskaps', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/kunskaps/index.m3u8', local: 'http://10.0.30.40/kunskaps/index.m3u8' },
-  { name: 'tv12', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/tv12/index.m3u8', local: 'http://10.0.30.40/tv12/index.m3u8' },
-  { name: 'kanal9', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/kanal9/index.m3u8', local: 'http://10.0.30.40/kanal9/index.m3u8' },
-  { name: 'svtbarn', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/svtbarn/index.m3u8', local: 'http://10.0.30.40/svtbarn/index.m3u8' },
-  { name: 'kanal5', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/kanal5/index.m3u8', local: 'http://10.0.30.40/kanal5/index.m3u8' },
-  { name: 'YLE1', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/YLE1/index.m3u8', local: 'http://10.0.30.40/YLE1/index.m3u8' },
-  { name: 'bbc', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/bbc/index.m3u8', local: 'http://10.0.30.40/bbc/index.m3u8' },
-  { name: 'mtv00', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/mtv00/index.m3u8', local: 'http://10.0.30.40/mtv00/index.m3u8' },
-  { name: 'bbcnordic', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/bbcnordic/index.m3u8', local: 'http://10.0.30.40/bbcnordic/index.m3u8' },
-  { name: 'viaplaysport', ip: '10.0.30.40', head: 'maia-noc', https: 'http://10.0.30.40/viaplaysport/index.m3u8', local: 'http://10.0.30.40/viaplaysport/index.m3u8' },
+export const PORTO_HQ_CHANNELS = MAIA_HQ_LIST.map(name => ({
+  name, ip: MAIA_HQ_IP, head: 'maia-hq', https: `http://${MAIA_HQ_IP}/${name}/index.m3u8`, local: `http://${MAIA_HQ_IP}/${name}/index.m3u8`
+}));
+
+const MAIA_NOC_IP = '10.0.30.40';
+const MAIA_NOC_LIST = [
+  'sjuan', 'tv8', 'tv4', 'skynews', 'svt2', 'svt1', 'kunskaps', 'tv12', 'kanal9', 
+  'svtbarn', 'kanal5', 'YLE1', 'bbc', 'mtv00', 'bbcnordic', 'viaplaysport'
 ];
+
+export const PORTO_NOC_CHANNELS = MAIA_NOC_LIST.map(name => ({
+  name, ip: MAIA_NOC_IP, head: 'maia-noc', https: `http://${MAIA_NOC_IP}/${name}/index.m3u8`, local: `http://${MAIA_NOC_IP}/${name}/index.m3u8`
+}));
 
 export const RAW_CHANNELS = [
   ...GLOBAL_CHANNELS.map(c => ({ ...c, source: 'global' as SourceKey })),
@@ -126,6 +65,5 @@ export const RAW_CHANNELS = [
 ];
 
 export const SYSTEM_INSTRUCTION = `You are a Nonius CDN Provisioning Bot.
-Your goal is to resolve technical configuration details for TV channels.
-AVAILABLE SOURCES: Global, Stockholm EDGE, Porto HQ Maia, Porto Maia NOC.
-ALWAYS return JSON matching ChannelResponse schema.`;
+Resolve TV channel configuration from the available registries.
+SOURCES: Global, Stockholm EDGE (172.18.56.5), Porto HQ Maia (10.20.30.253), Porto Maia NOC (10.0.30.40).`;

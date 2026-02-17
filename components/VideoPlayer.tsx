@@ -21,30 +21,33 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<'loading' | 'playing' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [useProxy, setUseProxy] = useState<boolean>(!url.startsWith('https://'));
 
-  useEffect(() => {
+  const initPlayer = () => {
     const video = videoRef.current;
     if (!video || !url) return;
 
-    let hls: Hls | null = null;
-    
-    // LOGIK: Ska vi använda proxyn?
-    // Om det är en lokal IP (172.18...) och vi kör på localhost, kör DIREKT.
-    // Annars använd proxyn.
-    const isInternal = url.includes('172.18.') || url.includes('10.');
-    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-    const finalUrl = (isInternal && isLocalHost) 
-      ? url 
-      : `/api/hls-proxy?url=${encodeURIComponent(url)}`;
+    setStatus('loading');
+    setErrorMsg('');
 
-    console.log(`[Player] Loading: ${finalUrl} (Mode: ${isInternal && isLocalHost ? 'Direct' : 'Proxied'})`);
+    // Bestäm slutgiltig URL
+    // Om URL:en är HTTPS (public) -> Kör direkt
+    // Om URL:en är HTTP -> Kör via Proxy (annars blockerar webbläsaren pga Mixed Content)
+    const finalUrl = useProxy 
+      ? `/api/hls-proxy?url=${encodeURIComponent(url)}` 
+      : url;
+
+    console.log(`[VideoPlayer] Initializing ${channelName}:`, { original: url, target: finalUrl, proxyActive: useProxy });
+
+    let hls: Hls | null = null;
 
     if (Hls.isSupported()) {
       hls = new Hls({
         enableWorker: true,
-        backBufferLength: 60,
-        manifestLoadingMaxRetry: 2,
+        manifestLoadingTimeOut: 15000,
+        fragLoadingTimeOut: 20000,
+        manifestLoadingMaxRetry: 3,
+        levelLoadingMaxRetry: 3,
       });
 
       hls.loadSource(finalUrl);
@@ -59,59 +62,89 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
         if (data.fatal) {
           console.error("HLS Fatal Error:", data);
           setStatus('error');
-          if (data.details === 'manifestLoadError' && !isLocalHost && isInternal) {
-            setErrorMsg("Cloud Proxy cannot reach local IP. Use Global source or run locally.");
-          } else {
-            setErrorMsg(data.details);
-          }
+          setErrorMsg(`${data.details} (Try bypassing proxy?)`);
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // För Safari
       video.src = finalUrl;
       video.addEventListener('loadedmetadata', () => {
         setStatus('playing');
         if (autoPlay) video.play().catch(() => {});
       });
+      video.addEventListener('error', () => {
+        setStatus('error');
+        setErrorMsg("Native Playback Error");
+      });
     }
 
+    return hls;
+  };
+
+  useEffect(() => {
+    const hls = initPlayer();
     return () => {
       if (hls) hls.destroy();
     };
-  }, [url, autoPlay]);
+  }, [url, useProxy]);
 
   return (
-    <div className={`relative bg-slate-950 aspect-video rounded-xl overflow-hidden group border border-white/5 ${className}`}>
+    <div className={`relative bg-black aspect-video rounded-xl overflow-hidden group border border-white/5 ${className}`}>
       <video 
         ref={videoRef} 
         className="w-full h-full object-contain" 
         muted={muted} 
         playsInline 
-        controls={showControls}
+        controls={showControls || status === 'playing'}
       />
       
       {status === 'loading' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-5 h-5 border-2 border-white/10 border-t-[#0070C0] rounded-full animate-spin"></div>
-            <span className="text-[8px] text-white/40 uppercase font-black tracking-widest">Buffering Signal</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border-2 border-[#0070C0]/20 border-t-[#0070C0] rounded-full animate-spin"></div>
+            <span className="text-[9px] text-white/60 uppercase font-black tracking-[0.2em]">Acquiring {useProxy ? 'Proxy' : 'Direct'} Feed</span>
           </div>
         </div>
       )}
 
       {status === 'error' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-950/90 p-4 text-center">
-          <div className="text-red-500 font-black text-[10px] uppercase mb-1">Signal Lost</div>
-          <div className="text-white/60 text-[8px] uppercase font-bold leading-tight max-w-[200px]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-950/90 p-6 text-center backdrop-blur-md">
+          <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+             <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+             </svg>
+          </div>
+          <div className="text-white font-black text-xs uppercase tracking-widest mb-2">Signal Connection Failure</div>
+          <div className="text-red-300/60 text-[9px] uppercase font-bold mb-6 max-w-[250px] leading-relaxed">
             {errorMsg}
           </div>
-          <div className="mt-3 px-2 py-1 bg-white/5 rounded text-[7px] text-white/30 font-mono">
-            {url.split('/')[2]}
+          
+          <div className="flex gap-3">
+             <button 
+                onClick={() => setUseProxy(!useProxy)}
+                className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-[9px] font-black text-white uppercase tracking-widest transition-all"
+             >
+                {useProxy ? 'Bypass Proxy' : 'Enable Proxy'}
+             </button>
+             <button 
+                onClick={() => { setStatus('loading'); initPlayer(); }}
+                className="px-4 py-2 bg-[#0070C0] hover:bg-[#0070C0]/80 rounded-lg text-[9px] font-black text-white uppercase tracking-widest transition-all"
+             >
+                Retry
+             </button>
           </div>
         </div>
       )}
 
-      <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-[7px] text-white/70 uppercase font-black tracking-widest backdrop-blur-md border border-white/10">
-        {channelName || 'Feed'}
+      <div className="absolute top-3 left-3 flex gap-2">
+         <div className="px-2 py-1 bg-black/60 rounded text-[8px] text-white font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
+           {channelName || 'Feed'}
+         </div>
+         {status === 'playing' && (
+           <div className="px-2 py-1 bg-[#87A238] rounded text-[8px] text-white font-black uppercase tracking-widest shadow-lg shadow-green-500/20">
+             Live
+           </div>
+         )}
       </div>
     </div>
   );

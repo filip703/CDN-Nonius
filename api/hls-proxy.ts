@@ -8,7 +8,6 @@ export default async function handler(req: Request) {
 
   if (!targetUrl) return new Response('Missing URL', { status: 400 });
 
-  // Hantera CORS Preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -24,24 +23,20 @@ export default async function handler(req: Request) {
     const response = await fetch(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*',
       },
-      redirect: 'follow'
     });
 
-    const responseHeaders = new Headers();
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Content-Type', response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl');
-    
-    // Vi läser in bodyn som en arrayBuffer för att vara säkra på att vi inte korruperar binärdata (segment)
-    const data = await response.arrayBuffer();
+    const newHeaders = new Headers();
+    newHeaders.set('Access-Control-Allow-Origin', '*');
+    newHeaders.set('Content-Type', response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl');
+    newHeaders.set('Cache-Control', 'no-cache');
 
-    return new Response(data, {
+    return new Response(response.body, {
       status: response.status,
-      headers: responseHeaders,
+      headers: newHeaders,
     });
   } catch (err: any) {
-    return new Response(`Proxy Error: ${err.message}`, { 
+    return new Response(`Gateway Error: ${err.message}`, { 
       status: 502, 
       headers: { 'Access-Control-Allow-Origin': '*' } 
     });

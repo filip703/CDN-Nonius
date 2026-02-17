@@ -11,7 +11,8 @@ interface VideoPlayerProps {
   channelName?: string;
 }
 
-const CORS_PROXY = 'https://corsproxy.io/?';
+// AllOrigins är stabilare för att bypassa CORS-blockeringar
+const PROXY_URL = "https://api.allorigins.win/raw?url=";
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ 
   url, 
@@ -22,133 +23,113 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   channelName
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [attemptProxy, setAttemptProxy] = useState(false);
-  const [isMixedContent, setIsMixedContent] = useState(false);
+  const [status, setStatus] = useState<'loading' | 'playing' | 'error' | 'proxy'>('loading');
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video || !url) return;
 
-    // Detect Mixed Content: Attempting to load HTTP on HTTPS site
-    const currentProtocol = window.location.protocol;
-    if (currentProtocol === 'https:' && url.startsWith('http://')) {
-      setIsMixedContent(true);
-      // Browser usually blocks this before HLS.js even starts
-    }
-
     let hls: Hls | null = null;
-    setError(null);
 
-    const startPlayer = (targetUrl: string) => {
+    const initPlayer = (targetUrl: string, useProxy: boolean = false) => {
       if (hls) hls.destroy();
+      
+      const finalUrl = useProxy ? `${PROXY_URL}${encodeURIComponent(targetUrl)}` : targetUrl;
 
       if (Hls.isSupported()) {
         hls = new Hls({
           enableWorker: true,
           lowLatencyMode: true,
-          manifestLoadingRetryDelay: 1000,
-          manifestLoadingMaxRetry: 3,
+          // Aggressiva inställningar för att ignorera CORS-fel på manifest-nivå
           xhrSetup: (xhr) => {
             xhr.withCredentials = false;
           }
         });
 
-        hls.loadSource(targetUrl);
+        hls.loadSource(finalUrl);
         hls.attachMedia(video);
         
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setStatus('playing');
           if (autoPlay) video.play().catch(() => {});
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
           if (data.fatal) {
-            console.warn(`HLS Fatal: ${data.details}. URL: ${targetUrl}`);
-            
-            // If it's a network/CORS error and we haven't tried the proxy yet
-            if (data.details === 'manifestLoadError' && !attemptProxy) {
-              console.log("CORS/Network error detected. Initiating proxy tunnel...");
-              setAttemptProxy(true);
+            if (data.details === 'manifestLoadError' && !useProxy) {
+              console.log("CORS block detekterad. Byter till Proxy-tunnel...");
+              setStatus('proxy');
+              initPlayer(url, true);
             } else {
-              setError(`Signal Error: ${data.details}`);
-              hls?.destroy();
+              console.error("HLS Fatal Error:", data);
+              setStatus('error');
             }
           }
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = targetUrl;
-      } else {
-        setError("Incompatible Browser Engine");
+        // Safari/iOS native fallback
+        video.src = finalUrl;
+        video.addEventListener('loadedmetadata', () => {
+          setStatus('playing');
+          if (autoPlay) video.play().catch(() => {});
+        });
       }
     };
 
-    // Determine if we should use the proxy immediately for known problematic origins
-    const shouldProxy = attemptProxy || (url.includes('se-ott.nonius.tv') && !url.includes('corsproxy.io'));
-    const finalUrl = shouldProxy ? `${CORS_PROXY}${encodeURIComponent(url)}` : url;
-
-    startPlayer(finalUrl);
+    // Försök direkt först
+    initPlayer(url);
 
     return () => {
       if (hls) hls.destroy();
     };
-  }, [url, autoPlay, attemptProxy]);
+  }, [url, autoPlay]);
 
   return (
-    <div className={`relative bg-black aspect-video overflow-hidden group rounded-lg border border-white/5 shadow-2xl ${className}`}>
-      {/* Mixed Content Warning */}
-      {isMixedContent && (
-        <div className="absolute inset-0 z-40 bg-slate-900/95 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center border-2 border-orange-500/20 m-2 rounded-xl">
-          <div className="w-12 h-12 bg-orange-500/10 rounded-full flex items-center justify-center mb-4">
-             <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          </div>
-          <h4 className="text-[11px] font-black text-white uppercase tracking-[0.3em] mb-2">Mixed Content Blocked</h4>
-          <p className="text-[9px] text-white/50 max-w-[280px] leading-relaxed mb-6 uppercase tracking-wider">
-            Modern browsers block <span className="text-orange-500">HTTP</span> streams on <span className="text-blue-400">HTTPS</span> sites. 
-            <br/><br/>
-            To monitor internal nodes: <br/> 
-            <span className="text-white font-black underline">Site Settings > Insecure Content > ALLOW</span>
-          </p>
-          <div className="text-[8px] font-mono text-white/20 bg-black/40 px-3 py-1.5 rounded border border-white/5 truncate w-full">
-            {url}
+    <div className={`relative bg-black aspect-video overflow-hidden rounded-lg group ${className}`}>
+      <video 
+        ref={videoRef} 
+        className="w-full h-full object-cover" 
+        muted={muted} 
+        playsInline 
+        controls={showControls}
+      />
+      
+      {/* Status Overlays */}
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm">
+          <div className="flex flex-col items-center">
+             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+             <span className="text-[8px] font-black text-white uppercase tracking-widest">Ingesting Feed...</span>
           </div>
         </div>
       )}
 
-      {error ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-center p-6 backdrop-blur-sm">
-          <div className="text-red-500 text-[10px] font-black uppercase tracking-[0.4em] mb-2">Signal Ingest Failure</div>
-          <div className="text-[8px] font-mono text-white/30 truncate w-full max-w-[240px] mb-4">{error}</div>
+      {status === 'proxy' && (
+        <div className="absolute top-2 right-2 bg-orange-500/80 px-2 py-0.5 rounded text-[7px] font-black text-white uppercase tracking-widest z-10 animate-pulse">
+          CORS Tunnel Active
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-red-950/80 backdrop-blur-md text-center p-4">
+          <svg className="w-8 h-8 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          <div className="text-[10px] font-black text-white uppercase mb-1">Signal Loss</div>
+          <div className="text-[8px] text-white/50 break-all max-w-full font-mono">{url}</div>
           <button 
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[8px] font-black uppercase tracking-widest text-white transition-all"
+            className="mt-4 px-3 py-1 bg-white/10 hover:bg-white/20 rounded text-[8px] font-bold text-white uppercase transition-all"
           >
-            Retry Sync
+            Re-sync Node
           </button>
         </div>
-      ) : (
-        <video 
-          ref={videoRef} 
-          className="w-full h-full object-cover" 
-          muted={muted} 
-          playsInline 
-          controls={showControls}
-        />
       )}
-      
-      {/* HUD Info */}
-      {!error && !isMixedContent && (
-        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20">
-           <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
-              <div className="text-[9px] font-black text-white uppercase tracking-tight">{channelName || 'LIVE'}</div>
-              <div className="text-[7px] font-mono text-white/40 uppercase tracking-widest">
-                {attemptProxy || url.includes('corsproxy') ? 'CORS TUNNEL ACTIVE' : 'DIRECT LINK'}
-              </div>
-           </div>
-           <div className="bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded text-[7px] text-green-500 font-black uppercase tracking-widest">
-             Signal 100%
-           </div>
-        </div>
-      )}
+
+      <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none transition-opacity duration-300 group-hover:opacity-100 opacity-60">
+        <div className={`w-2 h-2 rounded-full ${status === 'playing' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+        <span className="text-[9px] font-black text-white uppercase tracking-tighter drop-shadow-md">
+          {channelName || 'Live'}
+        </span>
+      </div>
     </div>
   );
 };

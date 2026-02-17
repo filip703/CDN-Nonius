@@ -24,30 +24,23 @@
             font-family: 'Barlow Semi Condensed', sans-serif;
             font-weight: 600;
         }
-        .mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        }
-        .nonius-gradient {
-            background: linear-gradient(135deg, #171844 0%, #0070C0 100%);
-        }
     </style>
 <script type="importmap">
 {
   "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "vite": "https://esm.sh/vite@^7.3.1",
     "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
-    "hls.js": "https://esm.sh/hls.js@^1.6.15"
+    "hls.js": "https://esm.sh/hls.js@^1.6.15",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
-    <!-- Denna rad är kritisk för att Vercel ska veta var koden börjar -->
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>
